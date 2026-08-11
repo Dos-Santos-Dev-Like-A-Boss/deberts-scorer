@@ -3,8 +3,7 @@
 import { useState } from "react";
 import {
   BASE_TOTAL,
-  Bonus,
-  BONUS_OPTIONS,
+  PRESET_TOTALS,
   PlayerNames,
   RoundInput,
   TeamId,
@@ -16,13 +15,18 @@ interface Props {
 }
 
 export default function RoundEntryForm({ players, onSubmit }: Props) {
-  const [bonus, setBonus] = useState<Bonus>(0);
+  const [presetTotal, setPresetTotal] = useState(BASE_TOTAL);
+  const [customMode, setCustomMode] = useState(false);
+  const [customTotalStr, setCustomTotalStr] = useState("");
   const [callingTeam, setCallingTeam] = useState<TeamId>("us");
   const [enteredTeam, setEnteredTeam] = useState<TeamId>("us");
   const [pointsStr, setPointsStr] = useState("");
 
-  const total = BASE_TOTAL + bonus;
+  const total = customMode
+    ? Math.max(0, Number(customTotalStr) || 0)
+    : presetTotal;
   const points = Math.min(Math.max(Number(pointsStr) || 0, 0), total);
+  const canSubmit = total > 0;
 
   function teamLabel(team: TeamId) {
     return team === "us" ? "Мы" : "Они";
@@ -30,13 +34,16 @@ export default function RoundEntryForm({ players, onSubmit }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!canSubmit) return;
     onSubmit({
-      bonus,
+      total,
       callingTeam,
       enteredTeam,
       enteredPoints: points,
     });
-    setBonus(0);
+    setPresetTotal(BASE_TOTAL);
+    setCustomMode(false);
+    setCustomTotalStr("");
     setCallingTeam("us");
     setEnteredTeam("us");
     setPointsStr("");
@@ -46,16 +53,38 @@ export default function RoundEntryForm({ players, onSubmit }: Props) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <FieldGroup label="Игра (сумма очков раздачи)">
         <div className="grid grid-cols-3 gap-2">
-          {BONUS_OPTIONS.map((b) => (
+          {PRESET_TOTALS.map((t) => (
             <ToggleButton
-              key={b}
-              active={bonus === b}
-              onClick={() => setBonus(b)}
+              key={t}
+              active={!customMode && presetTotal === t}
+              onClick={() => {
+                setCustomMode(false);
+                setPresetTotal(t);
+              }}
             >
-              {BASE_TOTAL + b}
+              {t}
             </ToggleButton>
           ))}
+          <ToggleButton
+            className="col-span-3"
+            active={customMode}
+            onClick={() => setCustomMode(true)}
+          >
+            Своё значение
+          </ToggleButton>
         </div>
+        {customMode && (
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            placeholder="Сумма очков раздачи"
+            value={customTotalStr}
+            onChange={(e) => setCustomTotalStr(e.target.value)}
+            autoFocus
+            className="mt-2 w-full rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-3 text-lg text-neutral-100 focus:border-sky-400 focus:outline-none"
+          />
+        )}
       </FieldGroup>
 
       <FieldGroup label="Кто играл">
@@ -101,7 +130,8 @@ export default function RoundEntryForm({ players, onSubmit }: Props) {
 
       <button
         type="submit"
-        className="mt-2 rounded-xl bg-emerald-500 py-4 text-lg font-semibold text-white active:bg-emerald-600"
+        disabled={!canSubmit}
+        className="mt-2 rounded-xl bg-emerald-500 py-4 text-lg font-semibold text-white active:bg-emerald-600 disabled:opacity-40"
       >
         Записать раунд
       </button>
@@ -128,10 +158,12 @@ function ToggleButton({
   active,
   onClick,
   children,
+  className = "",
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <button
@@ -141,7 +173,7 @@ function ToggleButton({
         active
           ? "border-sky-400 bg-sky-400/10 text-sky-300"
           : "border-neutral-700 text-neutral-300"
-      }`}
+      } ${className}`}
     >
       {children}
     </button>

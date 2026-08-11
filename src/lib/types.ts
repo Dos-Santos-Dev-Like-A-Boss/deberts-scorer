@@ -1,10 +1,8 @@
 export type TeamId = "us" | "them";
 
-export type Bonus = 0 | 20 | 40 | 50 | 70 | 90;
-
 export const BASE_TOTAL = 162;
 
-export const BONUS_OPTIONS: Bonus[] = [0, 20, 40, 50, 70, 90];
+export const PRESET_TOTALS: number[] = [162, 182, 202, 212, 232, 252];
 
 export interface PlayerNames {
   us: [string, string];
@@ -20,7 +18,8 @@ export interface GameConfig {
 /** Raw input the user provides for a single round. */
 export interface RoundInput {
   id: number;
-  bonus: Bonus;
+  /** Total points in play for this round's deal (preset or custom). */
+  total: number;
   callingTeam: TeamId;
   /** Which team's points were entered; the other team's points are the remainder. */
   enteredTeam: TeamId;
@@ -29,7 +28,6 @@ export interface RoundInput {
 
 /** Derived outcome of a single round, computed from RoundInput + config. */
 export interface RoundResult extends RoundInput {
-  total: number;
   usPoints: number;
   themPoints: number;
   /** Team that ended up with 0 raw points this round (БЗ), if any. */

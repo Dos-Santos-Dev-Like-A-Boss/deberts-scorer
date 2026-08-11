@@ -1,11 +1,4 @@
-import {
-  BASE_TOTAL,
-  GameConfig,
-  RoundInput,
-  RoundResult,
-  TeamId,
-  otherTeam,
-} from "./types";
+import { GameConfig, RoundInput, RoundResult, TeamId, otherTeam } from "./types";
 
 export interface GameSummary {
   results: RoundResult[];
@@ -38,7 +31,7 @@ export function computeGame(
   let themByteCount = 0;
 
   for (const round of rounds) {
-    const total = BASE_TOTAL + round.bonus;
+    const total = Math.max(1, round.total);
     let usPoints = 0;
     let themPoints = 0;
     let isBye = false;
