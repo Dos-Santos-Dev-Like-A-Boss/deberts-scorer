@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Деберц 2×2 — счётчик очков
 
-## Getting Started
+Веб-приложение (мобильное в первую очередь) для подсчёта очков в игре
+«деберц» 2×2. Один игрок за столом ведёт счёт на телефоне — остальное
+приложение считает само.
 
-First, run the development server:
+## Как играть
+
+1. **Настройка игры**: вводятся имена игроков двух команд («Мы» / «Они»),
+   выбирается цель — 501 или 1001 очко, а также штрафы за «БЗ» (без
+   взяток) и за «3 байта».
+2. **Каждый раунд** вводится:
+   - сумма очков раздачи: 162 (чистая игра) + бонусы за беллу (+20),
+     терц/полтинник (+50) или оба (+70);
+   - какая команда играла в масть (объявила контракт);
+   - если одна из команд не взяла ни одной взятки — отмечается «БЗ», и
+     вместо обычного счёта начисляется отдельный штраф;
+   - иначе вводятся очки одной из команд — очки второй команды
+     приложение досчитывает само от общей суммы раздачи.
+3. **Байт** определяется автоматически: если команда, объявившая игру,
+   набрала очков меньше соперника — все очки раздачи уходят сопернику.
+   Каждый 3-й байт одной команды (не обязательно подряд) добавляет ей
+   отдельный штраф.
+4. Игра завершается, когда одна из команд достигает выбранной цели
+   (501/1001), и приложение показывает победителя.
+
+Счёт хранится только в рамках текущей сессии браузера (sessionStorage) —
+обновление страницы его сохраняет, закрытие вкладки сбрасывает.
+
+## Разработка
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Стек: Next.js (App Router) + TypeScript + Tailwind CSS. Вся логика
+подсчёта — чистые функции в `src/lib/gameEngine.ts`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Деплой
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Проект задеплоен на Vercel.
