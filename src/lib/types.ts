@@ -1,8 +1,10 @@
 export type TeamId = "us" | "them";
 
-export type Bonus = 0 | 20 | 50 | 70;
+export type Bonus = 0 | 20 | 40 | 50 | 70 | 90;
 
 export const BASE_TOTAL = 162;
+
+export const BONUS_OPTIONS: Bonus[] = [0, 20, 40, 50, 70, 90];
 
 export interface PlayerNames {
   us: [string, string];
@@ -20,9 +22,7 @@ export interface RoundInput {
   id: number;
   bonus: Bonus;
   callingTeam: TeamId;
-  /** Team that took zero tricks this round, if any. */
-  bzTeam: TeamId | null;
-  /** Which team's points were manually entered (ignored when bzTeam is set). */
+  /** Which team's points were entered; the other team's points are the remainder. */
   enteredTeam: TeamId;
   enteredPoints: number;
 }
@@ -32,6 +32,8 @@ export interface RoundResult extends RoundInput {
   total: number;
   usPoints: number;
   themPoints: number;
+  /** Team that ended up with 0 raw points this round (БЗ), if any. */
+  bzTeam: TeamId | null;
   isBye: boolean;
   isThreeBye: boolean;
   usByteCountAfter: number;

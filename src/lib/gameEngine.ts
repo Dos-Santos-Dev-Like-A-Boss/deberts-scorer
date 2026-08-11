@@ -17,14 +17,15 @@ export interface GameSummary {
 }
 
 /**
- * Byte ("байт") = calling team collected strictly fewer points than the
- * opposing team -> the whole round total flips to the opposing team.
- * БЗ (zero tricks) is flagged manually per round and replaces the normal
- * split entirely: the БЗ team scores 0, the opponent gets the fixed
- * bzPenalty from game config instead of the round's point total.
- * Every 3rd byte (cumulative, not necessarily consecutive) by the same
- * team costs that team an extra threeByePenalty, subtracted from their
- * running total.
+ * БЗ (zero tricks) is detected automatically: whichever team ends up with
+ * literal 0 raw points this round (entered directly, or as the remainder
+ * of the other team's entry) gets nothing, and the opponent receives the
+ * fixed bzPenalty from game config instead of the round's point total.
+ * Otherwise, byte ("байт") applies: the calling team collected strictly
+ * fewer points than the opposing team -> the whole round total flips to
+ * the opposing team. Every 3rd byte (cumulative, not necessarily
+ * consecutive) by the same team costs that team an extra
+ * threeByePenalty, subtracted from their running total.
  */
 export function computeGame(
   config: GameConfig,
@@ -42,21 +43,25 @@ export function computeGame(
     let themPoints = 0;
     let isBye = false;
     let isThreeBye = false;
+    let bzTeam: TeamId | null = null;
 
-    if (round.bzTeam) {
-      const winner = otherTeam(round.bzTeam);
-      if (winner === "us") {
-        usPoints = config.bzPenalty;
-      } else {
-        themPoints = config.bzPenalty;
-      }
+    const enteredPoints = clamp(round.enteredPoints, 0, total);
+    const otherPoints = total - enteredPoints;
+    const enteredIsUs = round.enteredTeam === "us";
+    let provisionalUs = enteredIsUs ? enteredPoints : otherPoints;
+    let provisionalThem = enteredIsUs ? otherPoints : enteredPoints;
+
+    if (provisionalUs === 0) {
+      bzTeam = "us";
+    } else if (provisionalThem === 0) {
+      bzTeam = "them";
+    }
+
+    if (bzTeam) {
+      const winner = otherTeam(bzTeam);
+      usPoints = winner === "us" ? config.bzPenalty : 0;
+      themPoints = winner === "them" ? config.bzPenalty : 0;
     } else {
-      const enteredPoints = clamp(round.enteredPoints, 0, total);
-      const otherPoints = total - enteredPoints;
-      const enteredIsUs = round.enteredTeam === "us";
-      let provisionalUs = enteredIsUs ? enteredPoints : otherPoints;
-      let provisionalThem = enteredIsUs ? otherPoints : enteredPoints;
-
       const callingPoints =
         round.callingTeam === "us" ? provisionalUs : provisionalThem;
       const opposingPoints =
@@ -102,6 +107,7 @@ export function computeGame(
       total,
       usPoints,
       themPoints,
+      bzTeam,
       isBye,
       isThreeBye,
       usByteCountAfter: usByteCount,
@@ -126,19 +132,4 @@ export function computeGame(
 function clamp(value: number, min: number, max: number): number {
   if (Number.isNaN(value)) return min;
   return Math.min(Math.max(value, min), max);
-}
-
-export function bonusLabel(bonus: number): string {
-  switch (bonus) {
-    case 0:
-      return "Без прикупа";
-    case 20:
-      return "Белла (+20)";
-    case 50:
-      return "Терц/Полтинник (+50)";
-    case 70:
-      return "Белла + Терц (+70)";
-    default:
-      return `+${bonus}`;
-  }
 }
