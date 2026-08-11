@@ -4,9 +4,9 @@ export const BASE_TOTAL = 162;
 
 export const PRESET_TOTALS: number[] = [162, 182, 202, 212, 232, 252];
 
-export interface PlayerNames {
-  us: [string, string];
-  them: [string, string];
+export interface TeamNames {
+  us: string;
+  them: string;
 }
 
 export interface GameConfig {
@@ -45,7 +45,7 @@ export interface GamePhaseSetup {
 export interface GamePhasePlaying {
   phase: "playing" | "finished";
   config: GameConfig;
-  players: PlayerNames;
+  players: TeamNames;
   rounds: RoundInput[];
 }
 

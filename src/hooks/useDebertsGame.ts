@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import { computeGame, GameSummary } from "@/lib/gameEngine";
 import { clearState, loadState, saveState } from "@/lib/storage";
-import { GameConfig, PersistedState, PlayerNames, RoundInput } from "@/lib/types";
+import { GameConfig, PersistedState, TeamNames, RoundInput } from "@/lib/types";
 
 type Action =
   | { type: "HYDRATE"; state: PersistedState }
-  | { type: "START_GAME"; players: PlayerNames; config: GameConfig }
+  | { type: "START_GAME"; players: TeamNames; config: GameConfig }
   | { type: "ADD_ROUND"; input: Omit<RoundInput, "id"> }
   | { type: "UNDO_LAST_ROUND" }
   | { type: "RESET_GAME" };
@@ -68,7 +68,7 @@ export function useDebertsGame() {
   }, [state]);
 
   const startGame = useCallback(
-    (players: PlayerNames, config: GameConfig) =>
+    (players: TeamNames, config: GameConfig) =>
       dispatch({ type: "START_GAME", players, config }),
     []
   );

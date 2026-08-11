@@ -1,47 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { GameConfig, PlayerNames } from "@/lib/types";
+import { GameConfig, TeamNames } from "@/lib/types";
 
 interface Props {
-  onStart: (players: PlayerNames, config: GameConfig) => void;
+  onStart: (teams: TeamNames, config: GameConfig) => void;
 }
 
 export default function SetupForm({ onStart }: Props) {
-  const [usP1, setUsP1] = useState("");
-  const [usP2, setUsP2] = useState("");
-  const [themP1, setThemP1] = useState("");
-  const [themP2, setThemP2] = useState("");
+  const [teamA, setTeamA] = useState("");
+  const [teamB, setTeamB] = useState("");
   const [target, setTarget] = useState<501 | 1001>(1001);
   const [bzPenalty, setBzPenalty] = useState(90);
   const [threeByePenalty, setThreeByePenalty] = useState(150);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const players: PlayerNames = {
-      us: [usP1.trim() || "Игрок 1", usP2.trim() || "Игрок 2"],
-      them: [themP1.trim() || "Игрок 3", themP2.trim() || "Игрок 4"],
+    const teams: TeamNames = {
+      us: teamA.trim() || "Команда А",
+      them: teamB.trim() || "Команда Б",
     };
-    onStart(players, { target, bzPenalty, threeByePenalty });
+    onStart(teams, { target, bzPenalty, threeByePenalty });
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 pb-24">
-      <TeamFields
-        title="Команда «Мы»"
+      <TeamNameField
+        label="Название команды 1"
         accent="text-sky-400"
-        p1={usP1}
-        p2={usP2}
-        setP1={setUsP1}
-        setP2={setUsP2}
+        value={teamA}
+        onChange={setTeamA}
+        placeholder="Команда А"
       />
-      <TeamFields
-        title="Команда «Они»"
+      <TeamNameField
+        label="Название команды 2"
         accent="text-rose-400"
-        p1={themP1}
-        p2={themP2}
-        setP1={setThemP1}
-        setP2={setThemP2}
+        value={teamB}
+        onChange={setTeamB}
+        placeholder="Команда Б"
       />
 
       <section className="flex flex-col gap-2">
@@ -87,38 +83,28 @@ export default function SetupForm({ onStart }: Props) {
   );
 }
 
-function TeamFields({
-  title,
+function TeamNameField({
+  label,
   accent,
-  p1,
-  p2,
-  setP1,
-  setP2,
+  value,
+  onChange,
+  placeholder,
 }: {
-  title: string;
+  label: string;
   accent: string;
-  p1: string;
-  p2: string;
-  setP1: (v: string) => void;
-  setP2: (v: string) => void;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
 }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className={`text-sm font-medium ${accent}`}>{title}</h2>
-      <div className="grid grid-cols-2 gap-3">
-        <input
-          value={p1}
-          onChange={(e) => setP1(e.target.value)}
-          placeholder="Игрок 1"
-          className="rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-3 text-base text-neutral-100 placeholder:text-neutral-500 focus:border-sky-400 focus:outline-none"
-        />
-        <input
-          value={p2}
-          onChange={(e) => setP2(e.target.value)}
-          placeholder="Игрок 2"
-          className="rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-3 text-base text-neutral-100 placeholder:text-neutral-500 focus:border-sky-400 focus:outline-none"
-        />
-      </div>
+      <h2 className={`text-sm font-medium ${accent}`}>{label}</h2>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-3 text-base text-neutral-100 placeholder:text-neutral-500 focus:border-sky-400 focus:outline-none"
+      />
     </section>
   );
 }

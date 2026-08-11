@@ -1,8 +1,8 @@
-import { RoundResult, PlayerNames, GameConfig } from "@/lib/types";
+import { RoundResult, TeamNames, TeamId, GameConfig } from "@/lib/types";
 
 interface Props {
   results: RoundResult[];
-  players: PlayerNames;
+  players: TeamNames;
   config: GameConfig;
   onUndo: () => void;
 }
@@ -16,7 +16,7 @@ export default function HistoryList({ results, players, config, onUndo }: Props)
     );
   }
 
-  const teamLabel = (team: "us" | "them") => (team === "us" ? "Мы" : "Они");
+  const teamLabel = (team: TeamId) => players[team];
 
   return (
     <div className="flex flex-col gap-2">
@@ -46,11 +46,11 @@ export default function HistoryList({ results, players, config, onUndo }: Props)
               </span>
             </div>
             <div className="mt-1 flex items-center justify-between text-xs">
-              <span className="text-sky-400">
-                Мы {r.usPoints > 0 ? `+${r.usPoints}` : r.usPoints}
+              <span className="truncate text-sky-400">
+                {players.us} {r.usPoints > 0 ? `+${r.usPoints}` : r.usPoints}
               </span>
-              <span className="text-rose-400">
-                Они {r.themPoints > 0 ? `+${r.themPoints}` : r.themPoints}
+              <span className="truncate text-rose-400">
+                {players.them} {r.themPoints > 0 ? `+${r.themPoints}` : r.themPoints}
               </span>
             </div>
             {r.bzTeam && (

@@ -1,8 +1,8 @@
-import { GameConfig, PlayerNames } from "@/lib/types";
+import { GameConfig, TeamNames } from "@/lib/types";
 import { GameSummary } from "@/lib/gameEngine";
 
 interface Props {
-  players: PlayerNames;
+  players: TeamNames;
   config: GameConfig;
   summary: GameSummary;
 }
@@ -11,16 +11,14 @@ export default function ScoreBoard({ players, config, summary }: Props) {
   return (
     <div className="grid grid-cols-2 gap-3">
       <TeamCard
-        name="Мы"
-        players={players.us}
+        name={players.us}
         total={summary.usTotal}
         byteCount={summary.usByteCount}
         target={config.target}
         accent="sky"
       />
       <TeamCard
-        name="Они"
-        players={players.them}
+        name={players.them}
         total={summary.themTotal}
         byteCount={summary.themByteCount}
         target={config.target}
@@ -32,14 +30,12 @@ export default function ScoreBoard({ players, config, summary }: Props) {
 
 function TeamCard({
   name,
-  players,
   total,
   byteCount,
   target,
   accent,
 }: {
   name: string;
-  players: [string, string];
   total: number;
   byteCount: number;
   target: number;
@@ -53,10 +49,7 @@ function TeamCard({
 
   return (
     <div className={`rounded-2xl border ${colors.ring} bg-neutral-900 p-4`}>
-      <div className={`text-xs font-medium ${colors.text}`}>{name}</div>
-      <div className="truncate text-xs text-neutral-500">
-        {players[0]} и {players[1]}
-      </div>
+      <div className={`truncate text-xs font-medium ${colors.text}`}>{name}</div>
       <div className="mt-1 text-3xl font-bold tabular-nums text-neutral-50">
         {total}
       </div>

@@ -4,13 +4,13 @@ import { useState } from "react";
 import {
   BASE_TOTAL,
   PRESET_TOTALS,
-  PlayerNames,
+  TeamNames,
   RoundInput,
   TeamId,
 } from "@/lib/types";
 
 interface Props {
-  players: PlayerNames;
+  players: TeamNames;
   onSubmit: (input: Omit<RoundInput, "id">) => void;
 }
 
@@ -29,7 +29,7 @@ export default function RoundEntryForm({ players, onSubmit }: Props) {
   const canSubmit = total > 0;
 
   function teamLabel(team: TeamId) {
-    return team === "us" ? "Мы" : "Они";
+    return players[team];
   }
 
   function handleSubmit(e: React.FormEvent) {
