@@ -1,4 +1,11 @@
-import { GameConfig, RoundInput, RoundResult, TeamId, otherTeam } from "./types";
+import {
+  GameConfig,
+  HangingResolution,
+  RoundInput,
+  RoundResult,
+  TeamId,
+  otherTeam,
+} from "./types";
 
 export interface GameSummary {
   results: RoundResult[];
@@ -6,7 +13,7 @@ export interface GameSummary {
   themTotal: number;
   usByteCount: number;
   themByteCount: number;
-  /** Sum of each team's frozen hanging-bye points still waiting to be released. */
+  /** Points currently frozen from a hanging bye, awaiting the next round. */
   usPending: number;
   themPending: number;
   winner: TeamId | null;
@@ -15,10 +22,10 @@ export interface GameSummary {
 /**
  * БЗ (zero tricks) is detected automatically: whichever team ends up with
  * literal 0 raw points this round (entered directly, or as the remainder
- * of the other team's entry) gets nothing, and the opponent receives the
- * round's full point total PLUS the fixed bzPenalty from game config on
- * top of it (a "capot" bonus, not a replacement for the points they
- * actually won).
+ * of the other team's entry) gets nothing this round, and the opponent
+ * banks the round's full point total. On top of that, the BZ'd team pays
+ * the fixed bzPenalty out of their own running score (subtracted, not
+ * added to the winner).
  *
  * Otherwise, byte ("байт") applies: the calling team collected strictly
  * fewer points than the opposing team -> the whole round total flips to
@@ -28,12 +35,11 @@ export interface GameSummary {
  *
  * A tie (calling team's points === opposing team's points) is a
  * "висячий байт" (hanging bye): the opposing team banks their share
- * immediately, but the calling team's share freezes in a per-team queue
- * instead of being recorded. It is only released - oldest first - the
- * next time that team calls and wins outright (or, if another hanging
- * bye happens for them first, that new tie releases the previous freeze
- * and queues its own share instead). A later loss doesn't forfeit
- * frozen points; they just keep waiting.
+ * immediately, but the calling team's share freezes instead of being
+ * recorded. Its fate is decided by the very next round: if the frozen
+ * team scores more raw points than their opponent in that next round,
+ * the freeze is added on top; otherwise (opponent scores more, or it's
+ * another tie) it burns and is lost for good.
  */
 export function computeGame(
   config: GameConfig,
@@ -44,7 +50,8 @@ export function computeGame(
   let themTotal = 0;
   let usByteCount = 0;
   let themByteCount = 0;
-  const pending: Record<TeamId, number[]> = { us: [], them: [] };
+  let usPending = 0;
+  let themPending = 0;
 
   for (const round of rounds) {
     const total = Math.max(1, round.total);
@@ -54,8 +61,7 @@ export function computeGame(
     let isThreeBye = false;
     let isHangingBye = false;
     let bzTeam: TeamId | null = null;
-    let hangingReleasedTeam: TeamId | null = null;
-    let hangingReleasedPoints = 0;
+    const hangingResolutions: HangingResolution[] = [];
 
     const enteredPoints = clamp(round.enteredPoints, 0, total);
     const otherPoints = total - enteredPoints;
@@ -63,6 +69,28 @@ export function computeGame(
     const provisionalUs = enteredIsUs ? enteredPoints : otherPoints;
     const provisionalThem = enteredIsUs ? otherPoints : enteredPoints;
 
+    // Step 1: resolve any freeze from a prior hanging bye using this
+    // round's raw points, before scoring this round's own outcome.
+    if (usPending > 0) {
+      if (provisionalUs > provisionalThem) {
+        usPoints += usPending;
+        hangingResolutions.push({ team: "us", outcome: "added", points: usPending });
+      } else {
+        hangingResolutions.push({ team: "us", outcome: "burned", points: usPending });
+      }
+      usPending = 0;
+    }
+    if (themPending > 0) {
+      if (provisionalThem > provisionalUs) {
+        themPoints += themPending;
+        hangingResolutions.push({ team: "them", outcome: "added", points: themPending });
+      } else {
+        hangingResolutions.push({ team: "them", outcome: "burned", points: themPending });
+      }
+      themPending = 0;
+    }
+
+    // Step 2: score this round itself.
     if (provisionalUs === 0) {
       bzTeam = "us";
     } else if (provisionalThem === 0) {
@@ -71,8 +99,11 @@ export function computeGame(
 
     if (bzTeam) {
       const winner = otherTeam(bzTeam);
-      usPoints = winner === "us" ? total + config.bzPenalty : 0;
-      themPoints = winner === "them" ? total + config.bzPenalty : 0;
+      if (winner === "us") {
+        usPoints += total;
+      } else {
+        themPoints += total;
+      }
     } else {
       const callingTeam = round.callingTeam;
       const callingPoints = callingTeam === "us" ? provisionalUs : provisionalThem;
@@ -80,29 +111,20 @@ export function computeGame(
 
       if (callingPoints === opposingPoints) {
         isHangingBye = true;
-        if (pending[callingTeam].length > 0) {
-          hangingReleasedTeam = callingTeam;
-          hangingReleasedPoints = pending[callingTeam].shift()!;
-        }
-        pending[callingTeam].push(callingPoints);
-
-        const callerAward = hangingReleasedPoints;
         if (callingTeam === "us") {
-          usPoints = callerAward;
-          themPoints = opposingPoints;
+          themPoints += opposingPoints;
+          usPending = callingPoints;
         } else {
-          themPoints = callerAward;
-          usPoints = opposingPoints;
+          usPoints += opposingPoints;
+          themPending = callingPoints;
         }
       } else if (callingPoints < opposingPoints) {
         isBye = true;
         if (callingTeam === "us") {
-          usPoints = 0;
-          themPoints = total;
+          themPoints += total;
           usByteCount += 1;
         } else {
-          themPoints = 0;
-          usPoints = total;
+          usPoints += total;
           themByteCount += 1;
         }
         const count = callingTeam === "us" ? usByteCount : themByteCount;
@@ -110,24 +132,24 @@ export function computeGame(
           isThreeBye = true;
         }
       } else {
-        let callerAward = callingPoints;
-        if (pending[callingTeam].length > 0) {
-          hangingReleasedTeam = callingTeam;
-          hangingReleasedPoints = pending[callingTeam].shift()!;
-          callerAward += hangingReleasedPoints;
-        }
         if (callingTeam === "us") {
-          usPoints = callerAward;
-          themPoints = opposingPoints;
+          usPoints += callingPoints;
+          themPoints += opposingPoints;
         } else {
-          themPoints = callerAward;
-          usPoints = opposingPoints;
+          themPoints += callingPoints;
+          usPoints += opposingPoints;
         }
       }
     }
 
     usTotal += usPoints;
     themTotal += themPoints;
+
+    if (bzTeam === "us") {
+      usTotal -= config.bzPenalty;
+    } else if (bzTeam === "them") {
+      themTotal -= config.bzPenalty;
+    }
 
     if (isThreeBye) {
       if (round.callingTeam === "us") {
@@ -146,8 +168,7 @@ export function computeGame(
       isBye,
       isThreeBye,
       isHangingBye,
-      hangingReleasedTeam,
-      hangingReleasedPoints,
+      hangingResolutions,
       usByteCountAfter: usByteCount,
       themByteCountAfter: themByteCount,
     });
@@ -163,9 +184,6 @@ export function computeGame(
   } else if (themReached) {
     winner = "them";
   }
-
-  const usPending = pending.us.reduce((sum, v) => sum + v, 0);
-  const themPending = pending.them.reduce((sum, v) => sum + v, 0);
 
   return {
     results,

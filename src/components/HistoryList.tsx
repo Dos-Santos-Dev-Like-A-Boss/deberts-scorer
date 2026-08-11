@@ -55,8 +55,8 @@ export default function HistoryList({ results, players, config, onUndo }: Props)
             </div>
             {r.bzTeam && (
               <div className="mt-1 text-xs font-medium text-amber-400">
-                БЗ у {teamLabel(r.bzTeam)} · сопернику весь банк + штраф{" "}
-                {config.bzPenalty}
+                БЗ у {teamLabel(r.bzTeam)} · сопернику весь банк ({r.total}),
+                у {teamLabel(r.bzTeam)} доп. штраф −{config.bzPenalty}
               </div>
             )}
             {r.isBye && !r.bzTeam && (
@@ -72,17 +72,22 @@ export default function HistoryList({ results, players, config, onUndo }: Props)
             )}
             {r.isHangingBye && (
               <div className="mt-1 text-xs font-medium text-amber-400">
-                Висячий байт у {teamLabel(r.callingTeam)} —{" "}
-                {r.callingTeam === "us" ? r.themPoints : r.usPoints} очков
-                заморожены до следующей их победы
+                Висячий байт у {teamLabel(r.callingTeam)} — {r.total / 2}{" "}
+                очков заморожены, решится в следующем раунде
               </div>
             )}
-            {r.hangingReleasedTeam && (
-              <div className="mt-1 text-xs font-medium text-emerald-400">
-                Разморожено {r.hangingReleasedPoints} для{" "}
-                {teamLabel(r.hangingReleasedTeam)}
+            {r.hangingResolutions.map((res, i) => (
+              <div
+                key={i}
+                className={`mt-1 text-xs font-medium ${
+                  res.outcome === "added" ? "text-emerald-400" : "text-red-500"
+                }`}
+              >
+                {res.outcome === "added"
+                  ? `Разморожено +${res.points} для ${teamLabel(res.team)}`
+                  : `Сгорело ${res.points} у ${teamLabel(res.team)} (висячий байт не подтверждён)`}
               </div>
-            )}
+            ))}
           </li>
         ))}
       </ul>

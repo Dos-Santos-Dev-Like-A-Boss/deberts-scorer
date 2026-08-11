@@ -26,6 +26,12 @@ export interface RoundInput {
   enteredPoints: number;
 }
 
+export interface HangingResolution {
+  team: TeamId;
+  outcome: "added" | "burned";
+  points: number;
+}
+
 /** Derived outcome of a single round, computed from RoundInput + config. */
 export interface RoundResult extends RoundInput {
   usPoints: number;
@@ -34,11 +40,10 @@ export interface RoundResult extends RoundInput {
   bzTeam: TeamId | null;
   isBye: boolean;
   isThreeBye: boolean;
-  /** Calling team tied the opposing team — their share freezes until they next win. */
+  /** Calling team tied the opposing team this round — their share freezes. */
   isHangingBye: boolean;
-  /** Team (if any) whose frozen hanging-bye points were released this round. */
-  hangingReleasedTeam: TeamId | null;
-  hangingReleasedPoints: number;
+  /** Fate of any freeze(s) from the previous round, decided by this round's points. */
+  hangingResolutions: HangingResolution[];
   usByteCountAfter: number;
   themByteCountAfter: number;
 }
