@@ -11,7 +11,7 @@ export default function SetupForm({ onStart }: Props) {
   const [teamA, setTeamA] = useState("");
   const [teamB, setTeamB] = useState("");
   const [target, setTarget] = useState<501 | 1001>(1001);
-  const [bzPenalty, setBzPenalty] = useState(90);
+  const [bzPenalty, setBzPenalty] = useState(100);
   const [threeByePenalty, setThreeByePenalty] = useState(150);
 
   function handleSubmit(e: React.FormEvent) {
