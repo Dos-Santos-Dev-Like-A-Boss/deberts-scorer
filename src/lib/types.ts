@@ -34,6 +34,11 @@ export interface RoundResult extends RoundInput {
   bzTeam: TeamId | null;
   isBye: boolean;
   isThreeBye: boolean;
+  /** Calling team tied the opposing team — their share freezes until they next win. */
+  isHangingBye: boolean;
+  /** Team (if any) whose frozen hanging-bye points were released this round. */
+  hangingReleasedTeam: TeamId | null;
+  hangingReleasedPoints: number;
   usByteCountAfter: number;
   themByteCountAfter: number;
 }

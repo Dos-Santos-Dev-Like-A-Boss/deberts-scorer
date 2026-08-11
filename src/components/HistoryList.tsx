@@ -55,7 +55,8 @@ export default function HistoryList({ results, players, config, onUndo }: Props)
             </div>
             {r.bzTeam && (
               <div className="mt-1 text-xs font-medium text-amber-400">
-                БЗ у {teamLabel(r.bzTeam)} · штраф {config.bzPenalty}
+                БЗ у {teamLabel(r.bzTeam)} · сопернику весь банк + штраф{" "}
+                {config.bzPenalty}
               </div>
             )}
             {r.isBye && !r.bzTeam && (
@@ -67,6 +68,19 @@ export default function HistoryList({ results, players, config, onUndo }: Props)
               <div className="mt-1 text-xs font-medium text-red-500">
                 3-й байт у {teamLabel(r.callingTeam)} — доп. штраф −
                 {config.threeByePenalty}
+              </div>
+            )}
+            {r.isHangingBye && (
+              <div className="mt-1 text-xs font-medium text-amber-400">
+                Висячий байт у {teamLabel(r.callingTeam)} —{" "}
+                {r.callingTeam === "us" ? r.themPoints : r.usPoints} очков
+                заморожены до следующей их победы
+              </div>
+            )}
+            {r.hangingReleasedTeam && (
+              <div className="mt-1 text-xs font-medium text-emerald-400">
+                Разморожено {r.hangingReleasedPoints} для{" "}
+                {teamLabel(r.hangingReleasedTeam)}
               </div>
             )}
           </li>

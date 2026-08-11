@@ -14,6 +14,7 @@ export default function ScoreBoard({ players, config, summary }: Props) {
         name={players.us}
         total={summary.usTotal}
         byteCount={summary.usByteCount}
+        pending={summary.usPending}
         target={config.target}
         accent="sky"
       />
@@ -21,6 +22,7 @@ export default function ScoreBoard({ players, config, summary }: Props) {
         name={players.them}
         total={summary.themTotal}
         byteCount={summary.themByteCount}
+        pending={summary.themPending}
         target={config.target}
         accent="rose"
       />
@@ -32,12 +34,14 @@ function TeamCard({
   name,
   total,
   byteCount,
+  pending,
   target,
   accent,
 }: {
   name: string;
   total: number;
   byteCount: number;
+  pending: number;
   target: number;
   accent: "sky" | "rose";
 }) {
@@ -62,6 +66,11 @@ function TeamCard({
       <div className="mt-2 text-xs text-neutral-500">
         Байтов: <span className="tabular-nums">{byteCount}</span>
       </div>
+      {pending > 0 && (
+        <div className="mt-1 text-xs font-medium text-amber-400">
+          На кону (висячий байт): {pending}
+        </div>
+      )}
     </div>
   );
 }
